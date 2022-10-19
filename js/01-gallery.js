@@ -3,37 +3,53 @@ import { galleryItems } from './gallery-items.js';
 const galleryEl = document.querySelector('div');
 galleryEl.addEventListener('click', onClickShowModal);
 
-function onClickShowModal(event) {
-  event.preventDefault();
+const galleryMarkup = galleryItems.map(galleryElMarkup).join('');
 
-  if (event.target.nodeName !== 'IMG') {
-    return;
-  }
+galleryEl.insertAdjacentHTML('afterbegin', galleryMarkup);
 
-  const { src, alt } = event.target;
-  const instance = basicLightbox.create(`<img src="${src}" alt="${alt}"/>`);
-  instance.show();
+function galleryElMarkup({ preview, original, description }) {
+  return `<div class="gallery__item">
+  <a class="gallery__link" href="${original}">
+      <img
+        class="gallery__image"
+        src="${preview}"
+        data-source="${original}"
+        alt="${description}"
+      />
+      </a> 
+  </div>`;
+}
 
-  if (basicLightbox.visible()) {
-    galleryEl.addEventListener('keydown', onKeyDownCloseModal);
-    function onKeyDownCloseModal(event) {
-      event.preventDefault();
-      if (event.key === 'Escape') {
-        instance.close();
-        galleryEl.removeEventListener('keydown', onKeyDownCloseModal);
-      }
+function onClickShowModal(e) {
+  e.preventDefault();
+
+  if (e.target.nodeName !== 'IMG') return;
+
+  const instance = basicLightbox.create(
+    `
+  <div class="modal">
+    <img
+    class="modal__image"
+    src="${e.target.dataset.source}"
+    />
+  </div>
+  `,
+    {
+      onShow: instance => {
+        window.addEventListener('keydown', onEscPress);
+        instance.element().querySelector('img').onclick = instance.close;
+      },
+      onClose: instance => {
+        window.removeEventListener('keydown', onEscPress);
+      },
+    }
+  );
+
+  function onEscPress(e) {
+    if (e.code === 'Escape') {
+      instance.close();
     }
   }
-}
 
-function makeGallery(arr) {
-  const galleryItemsMarkup = arr
-    .map(({ preview, original, description }) => {
-      return `<div class="gallery__item"><a class="gallery__link" href="${original}"><img class="gallery__image" src="${preview}" data-source="${original}" alt="${description}"/></a></div>`;
-    })
-    .join('');
-  return galleryEl.insertAdjacentHTML('afterbegin', galleryItemsMarkup);
+  instance.show();
 }
-
-makeGallery(galleryItems);
-console.log(galleryItems);
