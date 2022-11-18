@@ -50,6 +50,6 @@ function onClickShowModal(e) {
       instance.close();
     }
   }
-
   instance.show();
 }
+// direction
